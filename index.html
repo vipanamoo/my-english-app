@@ -1,7 +1,610 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>나의 영어 문법 연습</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f3f6fa;
+  font-family: Arial, sans-serif;
+  color: #333;
+}
+
+.app {
+  max-width: 520px;
+  margin: auto;
+  padding: 24px 18px 40px;
+}
+
+h1 {
+  text-align: center;
+  color: #40516d;
+  margin-bottom: 5px;
+}
+
+.subtitle {
+  text-align: center;
+  color: #888;
+  margin-top: 0;
+}
+
+.info {
+  display: flex;
+  justify-content: space-between;
+  background: white;
+  padding: 14px 18px;
+  border-radius: 12px;
+  margin: 20px 0;
+  font-weight: bold;
+}
+
+.card {
+  background: white;
+  border-radius: 18px;
+  padding: 24px 20px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.08);
+}
+
+.question {
+  font-size: 21px;
+  font-weight: bold;
+  line-height: 1.5;
+  margin-bottom: 22px;
+}
+
+.choice {
+  width: 100%;
+  padding: 15px;
+  margin: 7px 0;
+  background: white;
+  border: 1px solid #d8dee8;
+  border-radius: 10px;
+  font-size: 17px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.choice.correct {
+  background: #e7f7ed;
+  border-color: #4caf70;
+}
+
+.choice.wrong {
+  background: #fff0f0;
+  border-color: #e06b6b;
+}
+
+.choice:disabled {
+  cursor: default;
+}
+
+.explanation {
+  margin-top: 18px;
+  padding: 15px;
+  border-radius: 10px;
+  background: #f4f6f9;
+  line-height: 1.65;
+}
+
+button.next,
+button.restart,
+button.wrongMode {
+  width: 100%;
+  border: 0;
+  border-radius: 10px;
+  padding: 15px;
+  margin-top: 14px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.next {
+  background: #536dfe;
+  color: white;
+}
+
+.restart {
+  background: #40516d;
+  color: white;
+}
+
+.wrongMode {
+  background: white;
+  border: 1px solid #ddd !important;
+  color: #555;
+}
+
+.hidden {
+  display: none;
+}
+
+.result {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.resultScore {
+  font-size: 32px;
+  font-weight: bold;
+  color: #536dfe;
+  margin: 15px;
+}
+</style>
+</head>
+
 <body>
-<h1>나의 영어 문법 앱</h1>
-<p>앱 연결 성공! 🎉</p>
+
+<div class="app">
+
+<h1>📚 나의 영어 문법</h1>
+<p class="subtitle">네가 헷갈렸던 문법을 연습해요</p>
+
+<div class="info">
+  <span id="progress">1 / 10</span>
+  <span id="score">점수 0</span>
+</div>
+
+<div class="card">
+
+  <div id="question" class="question"></div>
+
+  <div id="choices"></div>
+
+  <div id="explanation" class="explanation hidden"></div>
+
+  <button id="nextBtn" class="next hidden">
+    다음 문제 →
+  </button>
+
+</div>
+
+<button id="wrongBtn" class="wrongMode">
+  🔴 오답 다시 풀기
+</button>
+
+<div id="result" class="result hidden"></div>
+
+</div>
+
+<script>
+
+const questions = [
+
+{
+q:"Our neighbors ___ a lot.",
+choices:["help","helps"],
+answer:0,
+explanation:"neighbors는 여러 명이므로 they와 같은 취급을 해요. 여러 명일 때 일반동사에는 s를 붙이지 않아요. → help"
+},
+
+{
+q:"Our cats ___ like weekends.",
+choices:["don't","doesn't"],
+answer:0,
+explanation:"cats는 여러 마리이므로 they와 같아요. → They don't like..."
+},
+
+{
+q:"___ your child eat vegetables?",
+choices:["Do","Does"],
+answer:1,
+explanation:"your child는 한 명이므로 Does를 사용해요. Does 뒤에서는 동사원형 eat을 사용해요."
+},
+
+{
+q:"My head ___ today.",
+choices:["hurt","hurts"],
+answer:1,
+explanation:"My head는 하나이므로 3인칭 단수예요. 일반동사에 s를 붙여 → hurts"
+},
+
+{
+q:"___ your hands clean?",
+choices:["Do","Are"],
+answer:1,
+explanation:"clean은 '깨끗한'이라는 형용사예요. 형용사 앞에서는 be동사를 사용해요. → Are"
+},
+
+{
+q:"___ your foot hurt?",
+choices:["Does","Is"],
+answer:0,
+explanation:"hurt는 일반동사예요. your foot은 하나이므로 Does를 사용해요."
+},
+
+{
+q:"___ they at home?",
+choices:["Do","Are"],
+answer:1,
+explanation:"at home은 장소를 나타내요. 장소에 '있다'는 뜻에서는 be동사를 사용해요. → Are"
+},
+
+{
+q:"___ they watch TV every night?",
+choices:["Do","Are"],
+answer:0,
+explanation:"watch는 일반동사예요. they의 의문문이므로 Do를 사용해요."
+},
+
+{
+q:"___ your cat sleeping now?",
+choices:["Does","Is"],
+answer:1,
+explanation:"sleeping은 -ing 형태예요. 지금 하고 있는 행동이므로 be동사 + ing를 사용해요. → Is"
+},
+
+{
+q:"___ your cat sleep a lot?",
+choices:["Does","Is"],
+answer:0,
+explanation:"sleep은 일반동사예요. your cat은 한 마리이므로 Does를 사용해요."
+},
+
+{
+q:"I can ___ fast.",
+choices:["swim","swimming"],
+answer:0,
+explanation:"can 뒤에는 반드시 동사원형이 와요. → can swim"
+},
+
+{
+q:"My boyfriend ___ speak English.",
+choices:["doesn't","isn't"],
+answer:0,
+explanation:"speak은 일반동사예요. 일반동사의 부정은 doesn't + 동사원형을 사용해요."
+},
+
+{
+q:"She ___ tired.",
+choices:["doesn't","isn't"],
+answer:1,
+explanation:"tired는 형용사예요. 형용사 앞에서는 be동사를 사용해요. → isn't tired"
+},
+
+{
+q:"They ___ discussing a new topic.",
+choices:["are","do"],
+answer:0,
+explanation:"discussing은 -ing 형태이므로 be동사가 필요해요. → are discussing"
+},
+
+{
+q:"My dad ___ breakfast now.",
+choices:["cooks","is cooking"],
+answer:1,
+explanation:"now는 '지금'이라는 뜻이에요. 지금 하고 있는 행동은 be동사 + ing를 사용해요."
+},
+
+{
+q:"Let's have ___.",
+choices:["lunch","a lunch"],
+answer:0,
+explanation:"lunch를 식사 자체로 말할 때는 보통 관사를 붙이지 않아요. → have lunch"
+},
+
+{
+q:"Let's have ___ drink.",
+choices:["a","—"],
+answer:0,
+explanation:"drink가 '음료 한 잔'이라는 셀 수 있는 명사로 쓰였어요. → a drink"
+},
+
+{
+q:"I need ___ laptop.",
+choices:["a my","my"],
+answer:1,
+explanation:"my가 이미 소유를 나타내는 말이므로 a와 함께 사용할 수 없어요. → my laptop"
+},
+
+{
+q:"What color ___ Anna's glasses?",
+choices:["does","is","are"],
+answer:2,
+explanation:"glasses는 안경이라는 복수 명사예요. 따라서 are를 사용해요."
+},
+
+{
+q:"Swimming practice ___ fun.",
+choices:["is","are"],
+answer:0,
+explanation:"Swimming practice 전체가 하나의 명사 덩어리예요. 하나의 활동이므로 단수 취급해서 is를 사용해요."
+},
+
+{
+q:"We are ___ Julia's house.",
+choices:["at","in"],
+answer:0,
+explanation:"Julia's house라는 장소에 있다는 뜻에서는 보통 at을 사용해요."
+},
+
+{
+q:"Let's drive ___ in your car.",
+choices:["there","to there"],
+answer:0,
+explanation:"there 자체가 장소를 나타내기 때문에 일반적으로 to를 붙이지 않아요. → drive there"
+},
+
+{
+q:"It often ___.",
+choices:["snows","snow"],
+answer:0,
+explanation:"it은 3인칭 단수이므로 일반동사 snow에 s를 붙여요. → snows"
+},
+
+{
+q:"We ___ swimming right now.",
+choices:["are","do"],
+answer:0,
+explanation:"지금 수영하고 있는 중이므로 are + swimming을 사용해요."
+},
+
+{
+q:"He ___ English every day.",
+choices:["speaks","speak"],
+answer:0,
+explanation:"He는 3인칭 단수이므로 일반동사에 s를 붙여요. → speaks"
+},
+
+{
+q:"Does your child ___ vegetables?",
+choices:["eat","eats"],
+answer:0,
+explanation:"Does 뒤에는 동사원형이 와요. → eat"
+},
+
+{
+q:"Are they ___ a new topic?",
+choices:["discuss","discussing"],
+answer:1,
+explanation:"Are + 동사-ing 형태로 현재진행형을 만들어요. → discussing"
+},
+
+{
+q:"Our team ___ every game.",
+choices:["win","wins"],
+answer:1,
+explanation:"Our team은 하나의 팀이므로 3인칭 단수예요. → wins"
+},
+
+{
+q:"We ___ at swimming practice right now.",
+choices:["are","do"],
+answer:0,
+explanation:"장소를 나타내는 at swimming practice와 함께 be동사 are를 사용해요."
+},
+
+{
+q:"I ___ swimming fast now.",
+choices:["am","do"],
+answer:0,
+explanation:"지금 하고 있는 행동이므로 am + swimming을 사용해요."
+}
+
+];
+
+let quiz = [];
+let current = 0;
+let score = 0;
+let answered = false;
+
+let wrongQuestions =
+JSON.parse(localStorage.getItem("myEnglishWrong")) || [];
+
+function shuffle(arr) {
+  return [...arr].sort(() => Math.random() - 0.5);
+}
+
+function startQuiz() {
+
+  quiz = shuffle(questions).slice(0,10);
+
+  current = 0;
+  score = 0;
+
+  document.getElementById("score").textContent = "점수 0";
+  document.getElementById("result").classList.add("hidden");
+
+  showQuestion();
+}
+
+function showQuestion() {
+
+  answered = false;
+
+  const q = quiz[current];
+
+  document.getElementById("progress").textContent =
+    `${current + 1} / ${quiz.length}`;
+
+  document.getElementById("question").textContent = q.q;
+
+  document.getElementById("explanation").classList.add("hidden");
+
+  document.getElementById("nextBtn").classList.add("hidden");
+
+  const choices = document.getElementById("choices");
+
+  choices.innerHTML = "";
+
+  q.choices.forEach((choice,index)=>{
+
+    const button = document.createElement("button");
+
+    button.className = "choice";
+
+    button.textContent =
+      `${index + 1}. ${choice}`;
+
+    button.onclick = ()=>checkAnswer(index);
+
+    choices.appendChild(button);
+
+  });
+
+}
+
+function checkAnswer(selected) {
+
+  if(answered) return;
+
+  answered = true;
+
+  const q = quiz[current];
+
+  const buttons =
+    document.querySelectorAll(".choice");
+
+  buttons.forEach((button,index)=>{
+
+    button.disabled = true;
+
+    if(index === q.answer){
+
+      button.classList.add("correct");
+
+    }
+
+    if(index === selected &&
+       selected !== q.answer){
+
+      button.classList.add("wrong");
+
+    }
+
+  });
+
+  const explanation =
+    document.getElementById("explanation");
+
+  explanation.classList.remove("hidden");
+
+  if(selected === q.answer){
+
+    score++;
+
+    document.getElementById("score").textContent =
+      `점수 ${score}`;
+
+    explanation.innerHTML =
+      `✅ <b>정답!</b><br><br>💡 ${q.explanation}`;
+
+  } else {
+
+    saveWrong(q);
+
+    explanation.innerHTML =
+      `❌ <b>다시 생각해봐요.</b><br><br>💡 ${q.explanation}`;
+
+  }
+
+  document.getElementById("nextBtn")
+    .classList.remove("hidden");
+
+}
+
+function saveWrong(q){
+
+  const exists =
+    wrongQuestions.some(item => item.q === q.q);
+
+  if(!exists){
+
+    wrongQuestions.push(q);
+
+    localStorage.setItem(
+      "myEnglishWrong",
+      JSON.stringify(wrongQuestions)
+    );
+
+  }
+
+}
+
+document.getElementById("nextBtn")
+.onclick = function(){
+
+  current++;
+
+  if(current >= quiz.length){
+
+    finishQuiz();
+
+  } else {
+
+    showQuestion();
+
+  }
+
+};
+
+function finishQuiz(){
+
+  document.getElementById("question")
+    .textContent = "오늘의 학습 완료! 🎉";
+
+  document.getElementById("choices")
+    .innerHTML = "";
+
+  document.getElementById("explanation")
+    .classList.add("hidden");
+
+  document.getElementById("nextBtn")
+    .classList.add("hidden");
+
+  document.getElementById("progress")
+    .textContent = "완료";
+
+  const result =
+    document.getElementById("result");
+
+  result.classList.remove("hidden");
+
+  result.innerHTML = `
+    <div>오늘의 점수</div>
+    <div class="resultScore">
+      ${score} / ${quiz.length}
+    </div>
+    <button class="restart" onclick="startQuiz()">
+      🔄 다시 10문제 풀기
+    </button>
+  `;
+
+}
+
+document.getElementById("wrongBtn")
+.onclick = function(){
+
+  if(wrongQuestions.length === 0){
+
+    alert("아직 저장된 오답이 없어요.");
+
+    return;
+
+  }
+
+  quiz =
+    shuffle(wrongQuestions).slice(0,10);
+
+  current = 0;
+  score = 0;
+
+  document.getElementById("score")
+    .textContent = "점수 0";
+
+  showQuestion();
+
+};
+
+startQuiz();
+
+</script>
+
 </body>
 </html>
